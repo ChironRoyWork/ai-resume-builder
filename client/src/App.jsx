@@ -11,6 +11,11 @@ function App() {
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("");
 
+  const [jobPost, setJobPost] = useState("");
+  const [resumePoints, setResumePoints] = useState([]);
+  const [coverLetter, setCoverLetter] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleSignup = async (event) => {
     event.preventDefault();
 

@@ -16,6 +16,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/generate", generateRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -41,6 +42,7 @@ app.get("/api/db-test", async (req, res) => {
     });
   }
 });
+
 
 const PORT = 5000;
 
