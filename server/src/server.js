@@ -6,6 +6,8 @@ const pool = require("./db");
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const generateRoutes = require("./routes/generateRoutes");
+const savedVersionRoutes = require("./routes/savedVersionRoutes");
+
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/generate", generateRoutes);
+app.use("/api/versions", savedVersionRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({

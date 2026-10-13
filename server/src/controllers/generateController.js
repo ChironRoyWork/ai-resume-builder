@@ -1,9 +1,12 @@
 const pool = require("../db");
 const { GoogleGenAI } = require("@google/genai");
+const parseAIResponse = require("../utils/parseAIResponse");
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
 });
+
+const DAILY_GENERATION_LIMIT = 5;
 
 const callGemini = async (prompt) => {
   const delays = [0, 2000];
@@ -53,6 +56,25 @@ const generateContent = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { jobPost } = req.body;
+
+    const usageResult = await pool.query(
+      `SELECT generation_count
+      FROM ai_usage
+      WHERE user_id = $1
+        AND usage_date = CURRENT_DATE`,
+      [userId]
+    );
+
+const currentUsage =
+  usageResult.rows.length > 0
+    ? usageResult.rows[0].generation_count
+    : 0;
+
+if (currentUsage >= DAILY_GENERATION_LIMIT) {
+  return res.status(429).json({
+    message: "Daily AI generation limit reached. Please try again tomorrow."
+  });
+}
 
     if (
       !jobPost ||
@@ -144,24 +166,23 @@ Return ONLY valid JSON:
     let parsedResponse;
 
     try {
-      parsedResponse = JSON.parse(aiText);
+      parsedResponse = parseAIResponse(aiText);
     } catch (error) {
-      console.error("AI response parsing error:", error);
+      console.error("AI response validation error:", error.message);
 
       return res.status(502).json({
-        message: "AI returned an invalid response format"
+        message: "AI returned an invalid response"
       });
     }
 
-    if (
-      !Array.isArray(parsedResponse.resumePoints) ||
-      parsedResponse.resumePoints.length !== 4 ||
-      typeof parsedResponse.coverLetter !== "string"
-    ) {
-      return res.status(502).json({
-        message: "AI response is missing required content"
-      });
-    }
+    await pool.query(
+      `INSERT INTO ai_usage (user_id, usage_date, generation_count)
+      VALUES ($1, CURRENT_DATE, 1)
+      ON CONFLICT (user_id, usage_date)
+      DO UPDATE SET
+        generation_count = ai_usage.generation_count + 1`,
+      [userId]
+    );
 
     return res.status(200).json({
       message: "AI generation successful",
