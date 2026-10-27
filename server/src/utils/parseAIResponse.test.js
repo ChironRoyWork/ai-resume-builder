@@ -21,7 +21,7 @@ describe("parseAIResponse", () => {
   test("rejects invalid JSON", () => {
     expect(() => {
       parseAIResponse("not json");
-    }).toThrow("AI response is invalid JSON");
+    }).toThrow("AI response does not contain a JSON object");
   });
 
   test("rejects empty AI response", () => {

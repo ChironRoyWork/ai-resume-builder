@@ -1012,3 +1012,246 @@ a:focus-visible {
     break-inside: avoid;
   }
 }
+
+/* Structured professional resume builder */
+.profile-field { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.profile-entry h4 { margin:6px 0; }
+.bullet-editor { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.resume-select { width:100%; min-height:45px; padding:10px 14px; border:1px solid var(--border-strong); border-radius:9px; background:white; font-size:14px; }
+.form-hint { font-size:13px; color:var(--text-secondary); margin:0; }
+#profile, #generate { grid-column:1/-1; }
+.profile-subsection { display:flex; flex-direction:column; gap:12px; margin-top:26px; padding-top:24px; border-top:1px solid var(--border); }
+.profile-subsection h3 { margin:0; font-size:18px; }
+.profile-subsection p { margin:0 0 8px; color:var(--text-secondary); font-size:13px; }
+.profile-subsection-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px; }
+.profile-entry { display:flex; flex-direction:column; gap:12px; padding:20px; border:1px solid var(--border); border-radius:12px; background:var(--surface-soft); margin-bottom:14px; }
+.resume-preview .resume-contact { text-align:center; font-size:9pt; margin-top:5px; overflow-wrap:anywhere; }
+.resume-preview .resume-entry { margin-top:9px; break-inside:avoid; }
+.resume-preview .resume-entry-heading { display:flex; gap:12px; justify-content:space-between; align-items:baseline; }
+.resume-preview .resume-entry-heading strong { flex:1; }
+.resume-preview .resume-entry-dates { flex-shrink:0; font-weight:bold; text-align:right; font-size:10pt; }
+.resume-preview .resume-entry-subtitle { margin-top:2px; }
+.resume-preview .resume-skills-row { margin:3px 0; }
+.resume-preview .resume-section { margin-top:10px; }
+.resume-preview .resume-section h2 { margin:0 0 6px; padding-bottom:2px; }
+.resume-preview ul { margin:4px 0; padding-left:20px; }
+.resume-preview li { margin-bottom:3px; }
+@media (max-width:700px) { .resume-preview .resume-entry-heading { flex-wrap:wrap; } }
+@media print {
+  .resume-preview { padding:0.53in !important; font-size:10pt !important; }
+  .resume-preview .resume-header { margin-bottom:10px; }
+  .resume-preview .resume-header h1 { font-size:19pt; }
+  .resume-preview .resume-section h2 { font-size:11pt; }
+  .resume-preview .resume-entry-heading { flex-wrap:nowrap; }
+  .resume-preview .resume-entry { break-inside:avoid; }
+}
+
+/* ==========================================
+   PROFESSIONAL RESUME PREVIEW - FINAL STYLES
+========================================== */
+
+/* Resume header and contact information */
+
+.resume-preview .resume-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.resume-preview .resume-header h1 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 21pt;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.resume-preview .resume-contact {
+  margin: 5px 0 0;
+  font-size: 9pt;
+  text-align: center;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Section titles */
+
+.resume-preview .resume-section {
+  margin-top: 12px;
+}
+
+.resume-preview .resume-section h2 {
+  margin: 0 0 7px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #111;
+  font-size: 11pt;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Categorized skills */
+
+.resume-preview .resume-skill-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resume-preview .resume-skill-groups p {
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Education, experience and project entries */
+
+.resume-preview .resume-entry {
+  margin-top: 9px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Job/education/project headings with dates
+   aligned to the right */
+
+.resume-preview .resume-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  width: 100%;
+}
+
+.resume-preview .resume-entry-header strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 10.5pt;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+
+.resume-preview .resume-entry-date {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 10pt;
+  font-weight: bold;
+  text-align: right;
+}
+
+/* Experience descriptions and coursework */
+
+.resume-preview .resume-entry p {
+  margin: 3px 0;
+  line-height: 1.3;
+}
+
+/* Resume bullets */
+
+.resume-preview .resume-entry ul {
+  margin: 5px 0 7px;
+  padding-left: 20px;
+}
+
+.resume-preview .resume-entry li {
+  margin-bottom: 3px;
+  padding-left: 2px;
+  line-height: 1.3;
+}
+
+/* Professional profile forms */
+
+.profile-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.profile-subsection h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.profile-subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.profile-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  margin-bottom: 14px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* Full-width profile editor */
+
+#profile,
+#generate {
+  grid-column: 1 / -1;
+}
+
+/* Small-screen resume headings */
+
+@media screen and (max-width: 700px) {
+  .resume-preview .resume-entry-header {
+    flex-wrap: wrap;
+    gap: 3px 12px;
+  }
+
+  .resume-preview .resume-entry-date {
+    white-space: normal;
+  }
+}
+
+/* ==========================================
+   PDF PRINT STYLING
+========================================== */
+
+@media print {
+  .resume-preview {
+    padding: 0.53in !important;
+    font-size: 10pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .resume-preview .resume-header {
+    margin-bottom: 10px;
+  }
+
+  .resume-preview .resume-header h1 {
+    font-size: 19pt;
+  }
+
+  .resume-preview .resume-section {
+    margin-top: 9px;
+  }
+
+  .resume-preview .resume-section h2 {
+    font-size: 11pt;
+  }
+
+  .resume-preview .resume-entry-header {
+    flex-wrap: nowrap;
+  }
+
+  .resume-preview .resume-entry {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .resume-preview .resume-entry li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
