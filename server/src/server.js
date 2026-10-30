@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const generateRoutes = require("./routes/generateRoutes");
 const savedVersionRoutes = require("./routes/savedVersionRoutes");
+const interviewSessionRoutes = require("./routes/interviewSessionRoutes");
 
 
 const app = express();
@@ -22,12 +23,14 @@ app.use(
   })
 );
 
-app.use(express.json());
+// Two 25,000-character fields can exceed 100 KB when they contain Unicode.
+app.use(express.json({ limit: "512kb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/generate", generateRoutes);
 app.use("/api/versions", savedVersionRoutes);
+app.use("/api/interview-sessions", interviewSessionRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -55,7 +58,17 @@ app.get("/api/db-test", async (req, res) => {
 });
 
 
-const PORT = 5000;
+app.use((error, req, res, next) => {
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({ message: "Request is too large. Shorten the submitted text." });
+  }
+  if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+    return res.status(400).json({ message: "Request body must be valid JSON." });
+  }
+  return next(error);
+});
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

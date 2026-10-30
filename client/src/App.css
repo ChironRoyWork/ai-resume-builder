@@ -26,6 +26,28 @@
   --radius: 14px;
 }
 
+.reauth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.6);
+  overflow-y: auto;
+}
+
+.reauth-dialog {
+  width: min(100%, 470px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+.reauth-dialog > p { color: var(--text-secondary); line-height: 1.6; }
+.reauth-dialog > .btn { margin-top: 16px; }
+
+@media print { .reauth-overlay { display: none !important; } }
+
 body {
   background: var(--background);
   color: var(--text);

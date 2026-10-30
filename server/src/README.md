@@ -24,6 +24,7 @@ ResumeAI is a full-stack web application that helps job applicants generate tail
 - US Letter resume PDF export through browser printing
 - Responsive dashboard interface
 - Daily AI generation limit
+- Private interview practice sessions with editable job/resume context and history (Week 1)
 
 ## Local Setup
 
@@ -56,12 +57,13 @@ Optional frontend environment variable:
 
 ## Database Requirements
 
-The application uses four PostgreSQL tables:
+The application uses five PostgreSQL tables after the Interview Prep migration:
 
 - `users`
 - `profiles`
 - `ai_usage`
 - `saved_versions`
+- `interview_sessions`
 
 The database must be initialized with the appropriate tables, relationships, and unique constraints before running the application.
 
@@ -78,9 +80,11 @@ The database must be initialized with the appropriate tables, relationships, and
 
 ## Testing
 
-Run `npm test -- --runInBand` from the `server` folder to execute the existing automated parser tests.
+Run `npm test -- --runInBand` from the `server` folder to execute the parser, interview validation, and authenticated interview-route tests. Interview-route tests use a mocked database and do not contact Neon.
 
 Run `npm run lint` and `npm run build` from the `client` folder to check the frontend.
+
+Run `node --test tests/*.test.mjs` from `client` to check structured resume copying, account identity, and authentication recovery signals.
 
 End-to-end testing is also required for authentication, profile persistence, AI generation, saved versions, account isolation, and PDF export.
 
@@ -95,3 +99,13 @@ End-to-end testing is also required for authentication, profile persistence, AI 
 ## Project Status
 
 Final Week 4 implementation and validation. Completion is confirmed after all required tests pass.
+
+## Interview Prep — Week 1
+
+The logged-in dashboard now includes interview-session history and a form to create, reopen, edit, and delete sessions. Use **Use current resume and job** to copy the current application, including a reopened resume version. This foundation does not generate interview questions or answer feedback yet.
+
+See [`docs/INTERVIEW_PREP_SETUP.md`](../../docs/INTERVIEW_PREP_SETUP.md) for the API contract, local checks, and the Neon SQL Editor workflow for `server/migrations/001_interview_sessions.sql`. Apply it to a development branch/database first. No migration runs automatically, and production changes require explicit user approval.
+
+Authenticated requests now offer a sign-in recovery dialog. Signing back into the same account preserves current edits; switching accounts clears the previous account's work. History includes separate loading/error/empty states, and the session form shows unsaved status and context-length counts.
+
+See the [mentor demo guide](../../docs/MENTOR_DEMO_GUIDE.md) for architecture, design choices, tradeoffs, and the demonstration sequence, and the [verification record](../../docs/INTERVIEW_VERIFICATION.md) for test results and remaining live Neon checks. `PORT` optionally overrides the backend's default port 5000.

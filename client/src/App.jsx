@@ -1,6 +1,9 @@
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import ResumePreview from "./components/ResumePreview";
+import InterviewPrep from "./components/InterviewPrep";
+import { buildInterviewResumeText } from "./utils/interviewResumeContext";
+import { apiFetch, AUTHENTICATION_REQUIRED, getAccountKey } from "./utils/api";
 import "./App.css";
 
 const API_URL =
@@ -139,6 +142,42 @@ function App() {
   const [authToken, setAuthToken] = useState(
     () => localStorage.getItem("token")
   );
+  const [requiresSignIn, setRequiresSignIn] = useState(false);
+  const loadedAccount = useRef(null);
+  const signInDialog = useRef(null);
+  const accountKey = getAccountKey(authToken);
+
+  useEffect(() => {
+    if (!requiresSignIn) return;
+    const previousFocus = document.activeElement;
+    const dialog = signInDialog.current;
+    dialog?.querySelector("input")?.focus();
+    const keepFocus = (event) => {
+      if (event.key !== "Tab") return;
+      const controls = [...dialog.querySelectorAll("input, button")].filter((control) => !control.disabled);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first?.focus();
+      }
+    };
+    dialog?.addEventListener("keydown", keepFocus);
+    return () => {
+      dialog?.removeEventListener("keydown", keepFocus);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [requiresSignIn]);
+
+  useEffect(() => {
+    const requireSignIn = (event) => {
+      // Ignore a late response from an account that is no longer open.
+      if (event.detail?.token === authToken) setRequiresSignIn(true);
+    };
+    window.addEventListener(AUTHENTICATION_REQUIRED, requireSignIn);
+    return () => window.removeEventListener(AUTHENTICATION_REQUIRED, requireSignIn);
+  }, [authToken]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -224,6 +263,7 @@ function App() {
   };
 
   const clearUserData = () => {
+    loadedAccount.current = null;
     setName("");
     setSkills("");
     setExperience("");
@@ -271,7 +311,7 @@ function App() {
 
     try {
       await readResponse(
-        await fetch(`${API_URL}/api/auth/register`, {
+        await apiFetch(`${API_URL}/api/auth/register`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -298,7 +338,7 @@ function App() {
 
     try {
       const data = await readResponse(
-        await fetch(`${API_URL}/api/auth/login`, {
+        await apiFetch(`${API_URL}/api/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -314,13 +354,18 @@ function App() {
         throw new Error("No authentication token returned.");
       }
 
-      clearUserData();
+      const sameAccount = requiresSignIn && accountKey === getAccountKey(data.token);
+      if (requiresSignIn && !sameAccount && !window.confirm(
+        "This is a different account. Switch accounts and clear the current unsaved work?"
+      )) return;
+      if (!sameAccount) clearUserData();
 
       localStorage.setItem("token", data.token);
       setAuthToken(data.token);
+      setRequiresSignIn(false);
       setLoginPassword("");
 
-      showMessage("Logged in successfully!", "success");
+      showMessage(sameAccount ? "Signed in again. Your current edits are preserved." : "Logged in successfully!", "success");
     } catch (error) {
       showMessage(error.message, "error");
     }
@@ -331,7 +376,7 @@ function App() {
     if (!token) return;
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/profile`,
         {
           headers: {
@@ -359,6 +404,9 @@ function App() {
   // Automatically load profile and saved versions
   useEffect(() => {
     if (!authToken) return;
+    const identity = getAccountKey(authToken);
+    // Renewing the same account must not reload over unsaved profile edits.
+    if (loadedAccount.current === identity) return;
 
     const controller = new AbortController();
 
@@ -368,7 +416,7 @@ function App() {
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           `${API_URL}/api/profile`,
           {
             headers,
@@ -376,7 +424,7 @@ function App() {
           }
         );
 
-        if (response.status === 404) return;
+        if (response.status === 404) return true;
 
         const data = await readResponse(response);
 
@@ -400,6 +448,7 @@ function App() {
           );
 
           setProjects(asArray(profile.projects));
+          return true;
         }
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -412,7 +461,7 @@ function App() {
     const fetchVersions = async () => {
       try {
         const data = await readResponse(
-          await fetch(`${API_URL}/api/versions`, {
+          await apiFetch(`${API_URL}/api/versions`, {
             headers,
             signal: controller.signal
           })
@@ -421,6 +470,7 @@ function App() {
         if (!controller.signal.aborted) {
           setSavedVersions(asArray(data.versions));
           setHasLoadedVersions(true);
+          return true;
         }
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -430,8 +480,9 @@ function App() {
       }
     };
 
-    fetchProfile();
-    fetchVersions();
+    Promise.all([fetchProfile(), fetchVersions()]).then((loaded) => {
+      if (!controller.signal.aborted && loaded.every(Boolean)) loadedAccount.current = identity;
+    });
 
     return () => controller.abort();
   }, [authToken]);
@@ -553,7 +604,7 @@ function App() {
 
     try {
       const data = await readResponse(
-        await fetch(`${API_URL}/api/profile`, {
+        await apiFetch(`${API_URL}/api/profile`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -597,7 +648,7 @@ function App() {
 
     try {
       const data = await readResponse(
-        await fetch(`${API_URL}/api/generate`, {
+        await apiFetch(`${API_URL}/api/generate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -655,7 +706,7 @@ function App() {
 
     try {
       const data = await readResponse(
-        await fetch(`${API_URL}/api/versions`, {
+        await apiFetch(`${API_URL}/api/versions`, {
           headers: {
             Authorization: `Bearer ${authToken}`
           }
@@ -718,7 +769,7 @@ function App() {
 
     try {
       const data = await readResponse(
-        await fetch(`${API_URL}/api/versions`, {
+        await apiFetch(`${API_URL}/api/versions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -833,6 +884,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setAuthToken(null);
+    setRequiresSignIn(false);
     clearUserData();
     setLoginEmail("");
     setLoginPassword("");
@@ -862,8 +914,25 @@ function App() {
 
   return (
     <div className="app-shell">
+      {requiresSignIn && (
+        <div className="reauth-overlay">
+          <section ref={signInDialog} className="app-card reauth-dialog" role="dialog" aria-modal="true" aria-labelledby="reauth-title">
+            <h2 id="reauth-title">Sign in again to continue</h2>
+            <p>Your sign-in is no longer valid. Sign back into the same account to keep your current edits open.</p>
+            <form className="app-form" onSubmit={handleLogin}>
+              <TextField label="Email address" type="email" value={loginEmail} onChange={setLoginEmail} />
+              <TextField label="Password" type="password" value={loginPassword} onChange={setLoginPassword} />
+              <button className="btn btn-primary" type="submit">Sign in again</button>
+            </form>
+            {messageType === "error" && <p role="alert">{message}</p>}
+            <button className="btn btn-outline" type="button" onClick={() => {
+              if (window.confirm("Log out and clear the current unsaved work?")) handleLogout();
+            }}>Log out and clear work</button>
+          </section>
+        </div>
+      )}
       {/* Header */}
-      <header className="app-header">
+      <header className="app-header" inert={requiresSignIn}>
         <div className="header-inner">
           <div className="brand">
             <div className="brand-icon">R</div>
@@ -881,6 +950,7 @@ function App() {
               <a href="#profile">Profile</a>
               <a href="#generate">Generate</a>
               <a href="#versions">Saved Versions</a>
+              <a href="#interview-prep">Interview Prep</a>
 
               <button
                 type="button"
@@ -894,7 +964,7 @@ function App() {
         </div>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" inert={requiresSignIn}>
         {/* Status messages */}
         {message && (
           <div
@@ -1848,6 +1918,16 @@ function App() {
               </section>
             )}
 
+            <InterviewPrep
+              key={accountKey}
+              authToken={authToken}
+              initialJobPost={jobPost}
+              initialResumeText={buildInterviewResumeText(
+                resumeSnapshot(),
+                resumePoints
+              )}
+            />
+
             {/* Saved versions */}
             <section
               id="versions"
@@ -1942,7 +2022,7 @@ function App() {
         )}
       </main>
 
-      <footer className="app-footer">
+      <footer className="app-footer" inert={requiresSignIn}>
         ResumeAI · AI Resume & Cover Letter Builder
       </footer>
     </div>
